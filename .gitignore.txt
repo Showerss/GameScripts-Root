@@ -1,0 +1,7 @@
+# These are common Unity-specific ignore patterns
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+UserSettings/
