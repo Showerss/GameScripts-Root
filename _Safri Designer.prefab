@@ -443,6 +443,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128fd3e47f559e54ea7f55b9d3e061c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterType: 0
+  WalkingSpeed: 10
+  RunningSpeed: 20
+  JumpForce: 10
+  PlayerHeight: 2
+  Gravity: 9.8
 --- !u!1 &9110555694225224307
 GameObject:
   m_ObjectHideFlags: 0
