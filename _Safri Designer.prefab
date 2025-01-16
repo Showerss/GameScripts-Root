@@ -165,6 +165,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70579f8990308f44d9dee4aca5d80c08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  WalkingSpeed: 10
+  Health: 100
 --- !u!1 &2905115614148391838
 GameObject:
   m_ObjectHideFlags: 0
@@ -330,6 +332,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f01eb397f188424b86e12f2c5760510, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  audioType: 0
 --- !u!1 &6439092956885947459
 GameObject:
   m_ObjectHideFlags: 0
@@ -397,7 +400,39 @@ Transform:
   - {fileID: 6514149042335255764}
   - {fileID: 3060537965927138418}
   - {fileID: 5032951697507656378}
+  - {fileID: 6016456670297375935}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8034003801210204921
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 289663323179718455}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &289663323179718455
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8034003801210204921}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6016456670297375935}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8342441367458911490
 GameObject:
@@ -449,6 +484,57 @@ MonoBehaviour:
   JumpForce: 10
   PlayerHeight: 2
   Gravity: 9.8
+  Health: 100
+  Energy: 100
+  controls:
+    MoveForward: 119
+    MoveBackward: 115
+    MoveLeft: 97
+    MoveRight: 100
+    Run: 304
+    Jump: 32
+    Crouch: 306
+    Interact: 101
+    Attack: 323
+    BlockorAim: 324
+    Dodge: 308
+    OpenInventory: 105
+    OpenMap: 109
+    OpenQuests: 108
+    OpenSettings: 27
+    OpenCharacter: 99
+--- !u!1 &8789569861828202545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6016456670297375935}
+  m_Layer: 0
+  m_Name: == Camera Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6016456670297375935
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8789569861828202545}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 289663323179718455}
+  m_Father: {fileID: 8791673639667577211}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9110555694225224307
 GameObject:
   m_ObjectHideFlags: 0
