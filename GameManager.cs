@@ -1,12 +1,11 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR.Haptics;
 
 public class GameManager : MonoBehaviour
 {
-    /// <summary>
-    /// 
-    /// </summary>
+
         public enum GameState
     {
         MainMenu,
@@ -15,78 +14,58 @@ public class GameManager : MonoBehaviour
         GameOver
     }
 
-    /// <summary>
-    /// Methods to show or hide UI elements based on the game state
-    /// </summary>
-
-        private void ShowMainMenu()
-    {
-        //show main menu UI
-        //play main menu music
-        //hide pause menu
-        //hide game over menu
-    }
-
-    private void ShowPauseMenu()
-    {
-        //show pause menu UI
-        //play pause menu music
-        //hide main menu
-        //hide game over menu
-    }
-
-    private void ShowGameOverMenu()
-    {
-        //show game over menu UI
-        //play game over music
-        //hide main menu
-        //hide pause menu
-    }
-
-    private void ShowGameUI()
-    {
-        //show game UI
-        //play game music
-        //hide main menu
-        //hide pause menu
-        //hide game over menu
-    }
 
 
-/// <summary>
-/// 
-/// 
-/// Beginning of Game Logic Portion
-/// 
-/// 
-/// 
-/// </summary>
+
+
 
     public GameState gameState;
+    private UIManager uiManager;
+
+
+
+
+
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        uiManager = FindFirstObjectByType<UIManager>();
         gameState = GameState.MainMenu;
-        ShowMainMenu();
+        uiManager.ShowMainMenu();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if keypress Esc, show pause menu
-        if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            if(gameState == GameState.Playing)
+       //switch for either if ESC is pressed or isPlayerAlive == false to either show pausemenu or gameovermenu
+       switch(gameState)
+       {
+        // case GameState.GameOver:
+        //     if(PlayerController.isDead)
+        //     {
+        //         gameState = GameState.GameOver;
+        //         ShowGameOverMenu();
+        //     }
+        //     break;
+
+        case GameState.Playing:
+            if(Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 gameState = GameState.Paused;
-                ShowPauseMenu();
+                uiManager.ShowPauseMenu();
             }
-            else if(gameState == GameState.Paused)
+            break;
+
+        case GameState.Paused:
+            if(Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                gameState = GameState.Playing;
-                ShowGameUI();
+                gameState = GameState.Paused;
+                uiManager.ShowGameUI();
             }
-        }
+            break;
+       }
     }
 }
 

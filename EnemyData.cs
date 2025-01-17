@@ -3,6 +3,17 @@ using UnityEngine;
 public class EnemyData : MonoBehaviour
 {
 
+    public enum EnemyType
+    {
+        Melee,
+        Ranged,
+        Flying,
+        Boss,
+        MiniBoss,
+        Rare
+
+    }
+
     public enum CharacterStatus
     {
         Idle,
