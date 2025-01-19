@@ -19,16 +19,33 @@ public class PlayerController : MonoBehaviour
         Elder
     }
 
-    
-    private Rigidbody rb;  //rigidbody component
+    #region Player Status
+    public bool isGrounded = false; //is the player on the ground
+    public bool isRunning = false; //is the player running
+    public bool isCrouching = false; //is the player crouching
+    public bool isJumping = false; //is the player jumping
+    public bool isAttacking = false; //is the player attacking
+    public bool isBlocking = false; //is the player blocking
+    public bool isDodging = false; //is the player dodging
+    public bool isInteracting = false; //is the player interacting
+    public bool isDead = false; //is the player dead
+    public bool isAlive = true; //is the player alive
+    public bool isInvestigating = false; //is the player investigating
+    public bool isBusy = false; //is the player busy
+    #endregion
+
+
+
+    #region Player Construction
+    public Rigidbody rb;  //rigidbody component
     public CharacterType characterType; //type of character
     public Camera playerCamera; //camera that follows the player
+    #endregion
 
 
 
 
-
-
+    #region Player Movement
     [Header("Player Movement Settings")]
     [SerializeField] private float WalkingSpeed = 10.0f;
     [SerializeField] private float RunningSpeed = 20.0f;
@@ -36,6 +53,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float JumpForce = 10.0f;
     [SerializeField] private float PlayerHeight = 2.0f;
     [SerializeField] private float Gravity = 9.8f;
+    #endregion
 
     [Space(25)]
     
@@ -84,15 +102,38 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// Movement functions that are called in the different above gamestates
-    /// </summary>
+    #region Player Movement Methods
+
+    void Jump()
+    {
+        rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
+    }
+
+    void MoveForward()
+    {
+        rb.AddForce(playerCamera.transform.forward * WalkingSpeed);
+    }
+
+    void MoveBackward()
+    {
+        rb.AddForce(-playerCamera.transform.forward * WalkingSpeed);
+    }
+
+    void MoveLeft()
+    {
+        rb.AddForce(-playerCamera.transform.right * WalkingSpeed);
+    }
+
+    void MoveRight()
+    {
+        rb.AddForce(playerCamera.transform.right * WalkingSpeed);
+    }
+
+    #endregion
 
 
 
-    /// <summary>
-    /// Collapsable Menus Logic, playercontrols, etc...
-    /// </summary>
+    #region Collapsable Menus
 
     [System.Serializable]
     public class PlayerControls
@@ -116,5 +157,6 @@ public class PlayerController : MonoBehaviour
         public KeyCode OpenCharacter = KeyCode.C;
     }
 
+    #endregion
 
 }
