@@ -142,10 +142,16 @@ public class PlayerController : MonoBehaviour
     }
     void Sprint()
     {
-        rb.AddForce(playerCamera.transform.forward * RunningSpeed);
-        isRunning = true;
-        //should zoom the camera in some way as well to show the player is running
-        //depletes stamina
+        if(Stamina > 0)
+        {
+            rb.AddForce(playerCamera.transform.forward * RunningSpeed);
+            isRunning = true;
+            Stamina -= StaminaDepletion * Time.deltaTime;
+        }
+        else
+        {
+            isRunning = false;
+        }
     }
     void Crouch()
     {
@@ -211,10 +217,12 @@ public class PlayerController : MonoBehaviour
         if(Input.GetKey(controls.Crouch))
         {
             Crouch();
+            isCrouching = true;
         }
         if(Input.GetKeyDown(controls.Interact))
         {
             //Interact();
+            isBusy = true;
         }
 
         if(!isMoving)
