@@ -104,6 +104,11 @@ public class PlayerController : MonoBehaviour
 
 
     #region Player Movement Methods
+    void Idle()
+    {
+        //should stop the player from moving
+        transform.localScale = new Vector3(1, 1, 1);
+    }
     void Jump()
     {
         rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
@@ -136,6 +141,7 @@ public class PlayerController : MonoBehaviour
     void Crouch()
     {
         rb.AddForce(playerCamera.transform.forward * CrouchingSpeed);
+        transform.localScale = new Vector3(1, 0.5f, 1);
         //should lower the camera to show the player is crouching
     }
     void Interact()
@@ -172,11 +178,20 @@ public class PlayerController : MonoBehaviour
         {
             Sprint();
         }
+        else
+        {
+            Idle();
+        }
+
         if(Input.GetKey(controls.Crouch))
         {
             Crouch();
         }
-        if(Input.GetKeyUp(controls.Interact))
+        else
+        {
+            Idle();
+        }
+        if(Input.GetKeyDown(controls.Interact))
         {
             //Interact();
         }
