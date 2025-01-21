@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Multiplayer.Center.Common.Analytics;
 
 public class PlayerController : MonoBehaviour
 {
@@ -103,7 +104,6 @@ public class PlayerController : MonoBehaviour
 
 
     #region Player Movement Methods
-
     void Jump()
     {
         rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse);
@@ -128,13 +128,63 @@ public class PlayerController : MonoBehaviour
     {
         rb.AddForce(playerCamera.transform.right * WalkingSpeed);
     }
-
+    void Sprint()
+    {
+        rb.AddForce(playerCamera.transform.forward * RunningSpeed);
+        //should zoom the camera in some way as well to show the player is running
+    }
+    void Crouch()
+    {
+        rb.AddForce(playerCamera.transform.forward * CrouchingSpeed);
+        //should lower the camera to show the player is crouching
+    }
+    void Interact()
+    {
+        //should interact with the object in front of the player
+    }
     #endregion
 
 
+    #region Handle Movement
+    void HandleMovement()
+    {
+        if(Input.GetKey(controls.MoveForward))
+        {
+            MoveForward();
+        }
+        if(Input.GetKey(controls.MoveBackward))
+        {
+            MoveBackward();
+        }
+        if(Input.GetKey(controls.MoveLeft))
+        {
+            MoveLeft();
+        }
+        if(Input.GetKey(controls.MoveRight))
+        {
+            MoveRight();
+        }
+        if(Input.GetKeyDown(controls.Jump))
+        {
+            Jump();
+        }
+        if(Input.GetKey(controls.Run))
+        {
+            Sprint();
+        }
+        if(Input.GetKey(controls.Crouch))
+        {
+            Crouch();
+        }
+        if(Input.GetKeyUp(controls.Interact))
+        {
+            //Interact();
+        }
+    }
+    #endregion
+
 
     #region Collapsable Menus
-
     [System.Serializable]
     public class PlayerControls
     {
