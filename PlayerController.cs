@@ -101,8 +101,15 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate() //fixed update is called once per physics update
     {
+        
+        if(!isGrounded) //handle gravity
+        {
+            rb.AddForce(Vector3.down * Gravity * Time.fixedDeltaTime, ForceMode.Acceleration); //this basically adds gravity to the player, we use fixedDeltaTime to make sure the force is applied at a constant rate, and then forceMode acceleration is used to apply the force over time
+        }   
+        
         isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
-        RegenerateStamina();
+        
+        RegenerateStamina(); //regen stamina when you stop running
     }
 
     void RegenerateStamina()
