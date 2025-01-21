@@ -102,8 +102,16 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate() //fixed update is called once per physics update
     {
         isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
+        RegenerateStamina();
     }
 
+    void RegenerateStamina()
+    {
+        if(!isRunning && Stamina < 100)
+        {
+            Stamina += StaminaRegen * Time.deltaTime;
+        }
+    }
 
     #region Player Movement Methods (Idle, Jump, MoveForward, MoveBackward, MoveLeft, MoveRight, Sprint, Crouch, Interact)
     void Idle()
