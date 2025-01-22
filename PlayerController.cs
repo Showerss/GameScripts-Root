@@ -1,10 +1,10 @@
 using UnityEngine;
 using System.Collections;
 using Unity.Multiplayer.Center.Common.Analytics;
+using UnityEditor.Experimental.GraphView;
 
 public class PlayerController : MonoBehaviour
 {
-
     public enum CharacterType
     {
         NPC,
@@ -61,11 +61,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float Health = 100.0f;
     [SerializeField] private float Energy = 100.0f;
 
-    [Space(25)]
-    [Header("Player Stamina Settings")]
-    [SerializeField] private float Stamina = 100.0f;
-    [SerializeField] private float StaminaRegen = 1.0f;
-    [SerializeField] private float StaminaDepletion = 1.0f;
+    
+
+    private StaminaSystem staminaSystem;
+    private HealthSystem healthSystem;
+
     #endregion
 
     [Space(25)]
@@ -81,7 +81,15 @@ public class PlayerController : MonoBehaviour
 
     private void Awake() //awake is called when the script instance is being loaded
     {
-
+        if (rb == null) //if the rigidbody is not assigned, get the rigidbody component
+        {
+            rb = GetComponent<Rigidbody>();
+        }
+        if (playerCamera == null) //if the camera is not assigned, get the main camera
+        {
+            playerCamera = Camera.main;
+        }
+        
     }
 
     // Execution of Update after the MonoBehaviour is created
@@ -97,26 +105,26 @@ public class PlayerController : MonoBehaviour
         //sprint
         //crouch
         //jump
+
+        if(isAlive && healthSystem.CurrentHealth > 0)
+        {
+            healthSystem.RegenerateHealth();
+        }
+        
     }
 
     void FixedUpdate() //fixed update is called once per physics update
     {
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
         
         if(!isGrounded) //handle gravity
         {
             rb.AddForce(Vector3.down * Gravity * Time.fixedDeltaTime, ForceMode.Acceleration); //this basically adds gravity to the player, we use fixedDeltaTime to make sure the force is applied at a constant rate, and then forceMode acceleration is used to apply the force over time
         }   
         
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
-        
-        RegenerateStamina(); //regen stamina when you stop running
-    }
-
-    void RegenerateStamina()
-    {
-        if(!isRunning && Stamina < 100)
+        if(!isRunning)
         {
-            Stamina += StaminaRegen * Time.deltaTime;
+            staminaSystem.RegenerateStamina(); //regen stamina when you stop running
         }
     }
 
@@ -131,37 +139,18 @@ public class PlayerController : MonoBehaviour
     {
         if(isGrounded)
         {
-            rb.AddForce(Vector3.up * JumpForce, ForceMode.Impulse); //forcemode impulse is used to apply the force instantly
-            isJumping = true;
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, JumpForce, rb.linearVelocity.z); //forcemode impulse is used to apply the force instantly
         }
     }
 
-    void MoveForward()
-    {
-        rb.AddForce(playerCamera.transform.forward * WalkingSpeed);
-    }
-
-    void MoveBackward()
-    {
-        rb.AddForce(-playerCamera.transform.forward * WalkingSpeed);
-    }
-
-    void MoveLeft()
-    {
-        rb.AddForce(-playerCamera.transform.right * WalkingSpeed);
-    }
-
-    void MoveRight()
-    {
-        rb.AddForce(playerCamera.transform.right * WalkingSpeed);
-    }
     void Sprint()
     {
-        if(Stamina > 0)
+        if(staminaSystem.CurrentStamina > 0)
         {
             rb.AddForce(playerCamera.transform.forward * RunningSpeed);
+            staminaSystem.DepleteStamina();
             isRunning = true;
-            Stamina -= StaminaDepletion * Time.deltaTime;
+            
         }
         else
         {
@@ -170,18 +159,18 @@ public class PlayerController : MonoBehaviour
     }
     void Crouch()
     {
-        if(isCrouching)
-        {
-            transform.localScale = new Vector3(1, 1, 1);
-            rb.AddForce(playerCamera.transform.forward * WalkingSpeed);
-            isCrouching = false;
-        }
-        else
-        {
-            transform.localScale = new Vector3(1, 0.5f, 1);
-            rb.AddForce(playerCamera.transform.forward * CrouchingSpeed);
-            isCrouching = true;
-        }
+        // if(isCrouching)
+        // {
+        //     playerCollider.height = originalHeight;
+            
+        //     isCrouching = false;
+        // }
+        // else
+        // {
+        //     playerCollider.height = crouchHeight;
+            
+        //     isCrouching = true;
+        // }
         
     }
     void Interact()
@@ -196,27 +185,42 @@ public class PlayerController : MonoBehaviour
     {
 
         bool isMoving = false;
+        Vector3 movementDirection = Vector3.zero;
 
         if(Input.GetKey(controls.MoveForward))
         {
-            MoveForward();
+            movementDirection += playerCamera.transform.forward;
             isMoving = true;
         }
         if(Input.GetKey(controls.MoveBackward))
         {
-            MoveBackward();
+            movementDirection -= playerCamera.transform.forward;
             isMoving = true;
         }
         if(Input.GetKey(controls.MoveLeft))
         {
-            MoveLeft();
+            movementDirection -= playerCamera.transform.right;
             isMoving = true;
         }
         if(Input.GetKey(controls.MoveRight))
         {
-            MoveRight();
+            movementDirection += playerCamera.transform.right;
             isMoving = true;
         }
+
+
+        movementDirection.Normalize(); //this makes it so that the player moves at the same speed in all directions, diagonally too
+
+        if(movementDirection != Vector3.zero)
+        {
+            rb.linearVelocity = new Vector3(movementDirection.x * WalkingSpeed, rb.linearVelocity.y, movementDirection.z * WalkingSpeed);
+        }
+        else
+        {
+            Idle();
+        }
+
+
         if(Input.GetKeyDown(controls.Jump))
         {
             Jump();
