@@ -39,4 +39,10 @@ public class AudioManager : MonoBehaviour
     {
         //Monitor game state to pause/ OnApplicationResume or stop audio
     }
+
+
+    void OutofStaminaAudio()
+    {
+        //play out of stamina audio
+    }
 }
