@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using System.Collections.Generic;
 using System.Collections;
 using Unity.Multiplayer.Center.Common.Analytics;
 using UnityEditor.Experimental.GraphView;
@@ -27,9 +29,13 @@ namespace SafriDesigner
 
 
         #region Player Construction declarations (rigidbody, character type, camera)
-        public CharacterType characterType; //type of character
+        private CharacterType _characterType; //type of character
+        private PlayerLocomotionInput _playerLocomotionInput;
         [SerializeField] private CharacterController _characterController;
-        [SerializeField] private Camera _camera;
+        [SerializeField] private Camera _playerCamera;
+        private StaminaSystem staminaSystem;
+        private HealthSystem healthSystem;
+
         #endregion
 
 
@@ -55,10 +61,10 @@ namespace SafriDesigner
 
         #region Player health/stam/speed values and floats (walking speed, running speed, health, stamina, etc)
         [Header("Player Movement Settings")]
-        [SerializeField] public float WalkingSpeed = 10.0f;
+        [SerializeField] public float walkingSpeed = 10.0f;
         [SerializeField] public float runSpeed = 20.0f;
-        [SerializeField] private float CrouchingSpeed = 5.0f;
-        [SerializeField] private float JumpForce = 10.0f;
+        [SerializeField] private float crouchingSpeed = 5.0f;
+        [SerializeField] private float jumpForce = 10.0f;
         [SerializeField] private float PlayerHeight = 2.0f;
         [SerializeField] private float Gravity = 9.8f;
         
@@ -71,9 +77,7 @@ namespace SafriDesigner
 
         
 
-        private StaminaSystem staminaSystem;
-        private HealthSystem healthSystem;
-
+        
         #endregion
 
         [Space(25)]
@@ -85,22 +89,17 @@ namespace SafriDesigner
 
         [Space(50)]
         [SerializeField] private PlayerControls controls;
+        
 
 
         private void Awake() //awake is called when the script instance is being loaded
         {
-            if (rb == null) //if the rigidbody is not assigned, get the rigidbody component
+            if (_playerCamera == null) //if the camera is not assigned, get the main camera
             {
-                rb = GetComponent<Rigidbody>();
-            }
-            if (playerCamera == null) //if the camera is not assigned, get the main camera
-            {
-                playerCamera = Camera.main;
-            }
-            
+                _playerCamera = Camera.main;
+            }   
         }
 
-        // Execution of Update after the MonoBehaviour is created
         void Start() //start is called once before the first execution of Update after the MonoBehaviour is created
         {
             
@@ -109,10 +108,16 @@ namespace SafriDesigner
         // Update is called once per frame
         void Update() //update is called every frame
         {
-            //camera
-            //sprint
-            //crouch
-            //jump
+
+            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized; //Vector3 cameraForwardXZ
+            Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized; //Vector3 cameraRightXZ
+            Vector3 moveDirection = cameraRightXZ * _playerLocomotionInput.MovementInput.x + cameraForwardXZ * _playerLocomotionInput.MovementInput.y; //Vector3 moveDirection
+            Vector3 movementDelta = moveDirection * walkingSpeed * Time.deltaTime; //Vector3 movementDelta
+            Vector3 newVelocity = _characterController.velocity + movementDelta; //Vector3 newVelocity
+
+            //only call this once per frame
+            _characterController.Move(newVelocity * Time.deltaTime); //Move the character controller
+
 
             if(isAlive && healthSystem.CurrentHealth > 0)
             {
@@ -125,10 +130,7 @@ namespace SafriDesigner
         {
             isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
             
-            if(!isGrounded) //handle gravity
-            {
-                rb.AddForce(Vector3.down * Gravity * Time.fixedDeltaTime, ForceMode.Acceleration); //this basically adds gravity to the player, we use fixedDeltaTime to make sure the force is applied at a constant rate, and then forceMode acceleration is used to apply the force over time
-            }   
+            
             
             if(!isRunning && isAlive) //if the player is not running and is alive
             {
@@ -145,44 +147,16 @@ namespace SafriDesigner
         }
         void Jump()
         {
-            if(isGrounded)
-            {
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, JumpForce, rb.linearVelocity.z); //forcemode impulse is used to apply the force instantly
-            }
+            
         }
 
         void Sprint()
         {
-            if(staminaSystem.CurrentStamina > 0)
-            {
-                rb.AddForce(playerCamera.transform.forward * runSpeed);
-                staminaSystem.DepleteStamina();
-                isRunning = true;
-                // AudioManager.heavyBreathingAudio();
-                
-            }
-            else
-            {
-                isRunning = false;
-                // send message "out of stamina"
-                // GameManager.Instance.DisplayMessage("Out of Stamina");
-                // AudioManager.outofStaminaAudio();
-            }
+            
         }
         void Crouch()
         {
-            // if(isCrouching)
-            // {
-            //     playerCollider.height = originalHeight;
-                
-            //     isCrouching = false;
-            // }
-            // else
-            // {
-            //     playerCollider.height = crouchHeight;
-                
-            //     isCrouching = true;
-            // }
+            
             
         }
         void Interact()
@@ -190,79 +164,6 @@ namespace SafriDesigner
             //should interact with the object in front of the player
         }
         #endregion
-
-
-        // #region Handle Movement if statements (HandleMovement)
-        // void HandleMovement()
-        // {
-
-        //     bool isMoving = false;
-        //     Vector3 movementDirection = Vector3.zero;
-
-        //     if(Input.GetKey(controls.MoveForward))
-        //     {
-        //         movementDirection += playerCamera.transform.forward;
-        //         isMoving = true;
-        //     }
-        //     if(Input.GetKey(controls.MoveBackward))
-        //     {
-        //         movementDirection -= playerCamera.transform.forward;
-        //         isMoving = true;
-        //     }
-        //     if(Input.GetKey(controls.MoveLeft))
-        //     {
-        //         movementDirection -= playerCamera.transform.right;
-        //         isMoving = true;
-        //     }
-        //     if(Input.GetKey(controls.MoveRight))
-        //     {
-        //         movementDirection += playerCamera.transform.right;
-        //         isMoving = true;
-        //     }
-
-
-        //     movementDirection.Normalize(); //this makes it so that the player moves at the same speed in all directions, diagonally too
-
-        //     if(movementDirection != Vector3.zero)
-        //     {
-        //         rb.linearVelocity = new Vector3(movementDirection.x * WalkingSpeed, rb.linearVelocity.y, movementDirection.z * WalkingSpeed);
-        //     }
-        //     else
-        //     {
-        //         Idle();
-        //     }
-
-
-        //     if(Input.GetKeyDown(controls.Jump))
-        //     {
-        //         Jump();
-        //         isJumping = true;
-        //     }
-        //     if(Input.GetKey(controls.Sprint))
-        //     {
-        //         Sprint();
-        //         isRunning = true;
-        //         isMoving = true;
-        //     }
-
-        //     if(Input.GetKey(controls.Crouch))
-        //     {
-        //         Crouch();
-        //         isCrouching = true;
-        //     }
-        //     if(Input.GetKeyDown(controls.Interact))
-        //     {
-        //         //Interact();
-        //         isBusy = true;
-        //     }
-
-        //     if(!isMoving)
-        //     {
-        //         Idle();
-        //     }
-
-        // }
-        // #endregion
 
 
         #region Collapsable Menus Serializables (PlayerControls)

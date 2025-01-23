@@ -2372,7 +2372,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 6466
+  m_VersionIndex: 6469
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -7016,6 +7016,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128fd3e47f559e54ea7f55b9d3e061c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _characterController: {fileID: 8721996192786639399}
+  _playerCamera: {fileID: 483356573240317405}
   isGrounded: 0
   isRunning: 0
   isCrouching: 0
@@ -7028,11 +7030,8 @@ MonoBehaviour:
   isAlive: 1
   isInvestigating: 0
   isBusy: 0
-  rb: {fileID: 0}
-  characterType: 0
-  playerCamera: {fileID: 0}
   WalkingSpeed: 10
-  RunningSpeed: 20
+  runSpeed: 20
   CrouchingSpeed: 5
   JumpForce: 10
   PlayerHeight: 2
@@ -7048,10 +7047,6 @@ MonoBehaviour:
     height: 0
   showCrosshair: 1
   controls:
-    MoveForward: 119
-    MoveBackward: 115
-    MoveLeft: 97
-    MoveRight: 100
     Sprint: 304
     Jump: 32
     Crouch: 306
