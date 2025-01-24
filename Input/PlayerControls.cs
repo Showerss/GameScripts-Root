@@ -96,6 +96,54 @@ namespace SafriDesigner
                     ""isPartOfComposite"": true
                 }
             ]
+        },
+        {
+            ""name"": ""PlayerInteract"",
+            ""id"": ""f611bd93-f08e-46db-afb6-f09800b484ad"",
+            ""actions"": [
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""e0508196-2492-4ed8-a471-410cfbfae100"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Reload Weapon"",
+                    ""type"": ""Button"",
+                    ""id"": ""e8f27d6f-745b-4460-bc66-13ad6d42e17e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""6b003eca-b205-4486-8b26-87b3473a363f"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": ""Press"",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2183fbe1-047d-464c-9d88-475863176774"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Reload Weapon"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -103,11 +151,16 @@ namespace SafriDesigner
             // PlayerLocomotionMap
             m_PlayerLocomotionMap = asset.FindActionMap("PlayerLocomotionMap", throwIfNotFound: true);
             m_PlayerLocomotionMap_Movement = m_PlayerLocomotionMap.FindAction("Movement", throwIfNotFound: true);
+            // PlayerInteract
+            m_PlayerInteract = asset.FindActionMap("PlayerInteract", throwIfNotFound: true);
+            m_PlayerInteract_Interact = m_PlayerInteract.FindAction("Interact", throwIfNotFound: true);
+            m_PlayerInteract_ReloadWeapon = m_PlayerInteract.FindAction("Reload Weapon", throwIfNotFound: true);
         }
 
         ~@PlayerControls()
         {
             UnityEngine.Debug.Assert(!m_PlayerLocomotionMap.enabled, "This will cause a leak and performance issues, PlayerControls.PlayerLocomotionMap.Disable() has not been called.");
+            UnityEngine.Debug.Assert(!m_PlayerInteract.enabled, "This will cause a leak and performance issues, PlayerControls.PlayerInteract.Disable() has not been called.");
         }
 
         public void Dispose()
@@ -211,9 +264,68 @@ namespace SafriDesigner
             }
         }
         public PlayerLocomotionMapActions @PlayerLocomotionMap => new PlayerLocomotionMapActions(this);
+
+        // PlayerInteract
+        private readonly InputActionMap m_PlayerInteract;
+        private List<IPlayerInteractActions> m_PlayerInteractActionsCallbackInterfaces = new List<IPlayerInteractActions>();
+        private readonly InputAction m_PlayerInteract_Interact;
+        private readonly InputAction m_PlayerInteract_ReloadWeapon;
+        public struct PlayerInteractActions
+        {
+            private @PlayerControls m_Wrapper;
+            public PlayerInteractActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
+            public InputAction @Interact => m_Wrapper.m_PlayerInteract_Interact;
+            public InputAction @ReloadWeapon => m_Wrapper.m_PlayerInteract_ReloadWeapon;
+            public InputActionMap Get() { return m_Wrapper.m_PlayerInteract; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(PlayerInteractActions set) { return set.Get(); }
+            public void AddCallbacks(IPlayerInteractActions instance)
+            {
+                if (instance == null || m_Wrapper.m_PlayerInteractActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_PlayerInteractActionsCallbackInterfaces.Add(instance);
+                @Interact.started += instance.OnInteract;
+                @Interact.performed += instance.OnInteract;
+                @Interact.canceled += instance.OnInteract;
+                @ReloadWeapon.started += instance.OnReloadWeapon;
+                @ReloadWeapon.performed += instance.OnReloadWeapon;
+                @ReloadWeapon.canceled += instance.OnReloadWeapon;
+            }
+
+            private void UnregisterCallbacks(IPlayerInteractActions instance)
+            {
+                @Interact.started -= instance.OnInteract;
+                @Interact.performed -= instance.OnInteract;
+                @Interact.canceled -= instance.OnInteract;
+                @ReloadWeapon.started -= instance.OnReloadWeapon;
+                @ReloadWeapon.performed -= instance.OnReloadWeapon;
+                @ReloadWeapon.canceled -= instance.OnReloadWeapon;
+            }
+
+            public void RemoveCallbacks(IPlayerInteractActions instance)
+            {
+                if (m_Wrapper.m_PlayerInteractActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            public void SetCallbacks(IPlayerInteractActions instance)
+            {
+                foreach (var item in m_Wrapper.m_PlayerInteractActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_PlayerInteractActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        public PlayerInteractActions @PlayerInteract => new PlayerInteractActions(this);
         public interface IPlayerLocomotionMapActions
         {
             void OnMovement(InputAction.CallbackContext context);
+        }
+        public interface IPlayerInteractActions
+        {
+            void OnInteract(InputAction.CallbackContext context);
+            void OnReloadWeapon(InputAction.CallbackContext context);
         }
     }
 }
