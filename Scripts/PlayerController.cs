@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.Collections;
 using Unity.Multiplayer.Center.Common.Analytics;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine.Rendering;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace SafriDesigner
 {
+    [DefaultExecutionOrder(-1)] //execution order is set to -1, meaning this script will run before all other scripts
     public class PlayerController : MonoBehaviour
     {
 
@@ -35,6 +38,9 @@ namespace SafriDesigner
         [SerializeField] private Camera _playerCamera;
         private StaminaSystem staminaSystem;
         private HealthSystem healthSystem;
+        private Vector2 _cameraRotation = Vector2.zero;
+        private Vector2 _playerTargetRotation;
+        private Vector3 _velocity;
 
         #endregion
 
@@ -88,16 +94,44 @@ namespace SafriDesigner
         
 
         [Space(50)]
+
+        [Header("Camera Controls")]
+        [SerializeField] private float cameraSensitivity = 2.0f;
+        [SerializeField] private float cameraSmoothing = 2.0f;
+        [SerializeField] private float cameraMaxVerticalAngle = 80.0f;
+
+
         [SerializeField] private PlayerControls controls;
         
 
 
         private void Awake() //awake is called when the script instance is being loaded
         {
-            if (_playerCamera == null) //if the camera is not assigned, get the main camera
+
+            /// <summary>
+            /// awake is called when the script instance is being loaded, it is the first method called, so typically within awake we need to write code that sets up references between scripts, and initializes variables
+            /// checklist of things to make sure are in awake:
+            /// 1. assign locomotion input
+            /// 2. assign character controller
+            /// 3. assign camera
+            /// 4. assign health system
+            /// 5. assign stamina system
+            /// </summary>
+            
+
+            //assign locomotion input
+            _playerLocomotionInput = GetComponent<PlayerLocomotionInput>();
+
+            //assign character controller
+            _characterController = GetComponent<CharacterController>();
+
+            //if the camera is not assigned, get the main camera
+            if (_playerCamera == null) 
             {
                 _playerCamera = Camera.main;
             }   
+
+
         }
 
         void Start() //start is called once before the first execution of Update after the MonoBehaviour is created
@@ -108,12 +142,23 @@ namespace SafriDesigner
         // Update is called once per frame
         void Update() //update is called every frame
         {
+            //Gravity 
+            if(isGrounded && _velocity.y < 0)
+            {
+                _velocity.y = -2f;
+            }
 
             Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized; //Vector3 cameraForwardXZ
             Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized; //Vector3 cameraRightXZ
+
             Vector3 moveDirection = cameraRightXZ * _playerLocomotionInput.MovementInput.x + cameraForwardXZ * _playerLocomotionInput.MovementInput.y; //Vector3 moveDirection
-            Vector3 movementDelta = moveDirection * walkingSpeed * Time.deltaTime; //Vector3 movementDelta
+
+            Vector3 movementDelta = moveDirection * runSpeed * Time.deltaTime; //Vector3 movementDelta
             Vector3 newVelocity = _characterController.velocity + movementDelta; //Vector3 newVelocity
+
+
+            //keep the players max speed at runSpeed
+            newVelocity = Vector3.ClampMagnitude(newVelocity, runSpeed); //Vector3 newVelocity
 
             //only call this once per frame
             _characterController.Move(newVelocity * Time.deltaTime); //Move the character controller
@@ -126,10 +171,13 @@ namespace SafriDesigner
             
         }
 
+        private void LateUpdate()
+        {
+                
+        }
+
         void FixedUpdate() //fixed update is called once per physics update
         {
-            isGrounded = Physics.Raycast(transform.position, Vector3.down, PlayerHeight / 2 + 0.1f); //this checks if the player is on the ground
-            
             
             
             if(!isRunning && isAlive) //if the player is not running and is alive
@@ -143,7 +191,7 @@ namespace SafriDesigner
         {
             //should stop the player from moving
             //regains stamina
-            transform.localScale = new Vector3(1, 1, 1);
+            // transform.localScale = new Vector3(1, 1, 1);
         }
         void Jump()
         {
@@ -164,32 +212,5 @@ namespace SafriDesigner
             //should interact with the object in front of the player
         }
         #endregion
-
-
-        #region Collapsable Menus Serializables (PlayerControls)
-        [System.Serializable]
-        public class PlayerControls
-        {
-            [Header("Player Controls")]
-            // public KeyCode MoveForward = KeyCode.W;
-            // public KeyCode MoveBackward = KeyCode.S;
-            // public KeyCode MoveLeft = KeyCode.A;
-            // public KeyCode MoveRight = KeyCode.D;
-            public KeyCode Sprint = KeyCode.LeftShift;
-            public KeyCode Jump = KeyCode.Space;
-            public KeyCode Crouch = KeyCode.LeftControl;
-            public KeyCode Interact = KeyCode.E;
-            public KeyCode Attack = KeyCode.Mouse0;
-            public KeyCode BlockorAim = KeyCode.Mouse1;
-            public KeyCode Dodge = KeyCode.LeftAlt;
-            public KeyCode OpenInventory = KeyCode.I;
-            public KeyCode OpenMap = KeyCode.M;
-            public KeyCode OpenQuests = KeyCode.L;
-            public KeyCode OpenSettings = KeyCode.Escape;
-            public KeyCode OpenCharacter = KeyCode.C;
-        }
-
-        #endregion
-
     }
 }
