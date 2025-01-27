@@ -35,15 +35,9 @@ namespace SafriDesigner
         #region Player Construction declarations (rigidbody, character type, camera)
         private CharacterType _characterType; //type of character
         private PlayerLocomotionInput _playerLocomotionInput;
-        
-        
-        private StaminaSystem staminaSystem;
-        private HealthSystem healthSystem;
-        
-        
-        private Vector3 _velocity; //veclcity will be stored as a vector3 (x, y, z)
-
+        private Plane groundPlane;
         #endregion
+
 
 
         #region Player Status bools (blocking, dead, alive, running, etc)
@@ -76,12 +70,20 @@ namespace SafriDesigner
         [SerializeField] private float jumpForce = 10.0f;
         [SerializeField] private float PlayerHeight = 2.0f;
         [SerializeField] private float Gravity = 9.8f;
+        private Vector3 _movementInput;
+        private Vector3 _velocity; 
         
 
         [Space(25)]
         
         [Header("Player Health Settings")]
+        private HealthSystem healthSystem;
         [SerializeField] private float Health = 100.0f;
+
+
+        [Space(25)]
+        [Header("Player Stamina Settings")]
+        private StaminaSystem staminaSystem;
         [SerializeField] private float Energy = 100.0f;
 
 
@@ -103,8 +105,6 @@ namespace SafriDesigner
         [SerializeField] private float cameraSensitivityV = 2.0f;
         [SerializeField] private float cameraSmoothing = 2.0f;
         [SerializeField] private float cameraMaxVerticalAngle = 80.0f;
-        // private Vector2 _cameraRotation = Vector2.zero;
-        // private Vector2 _playerTargetRotation;
         
 
 
@@ -135,6 +135,9 @@ namespace SafriDesigner
                 _playerCamera = Camera.main;
             }   
 
+            //make the groundPlane which will be for the player to walk on and for faceing mouse direction
+            groundPlane = new Plane(Vector3.up, Vector3.zero);
+
 
         }
 
@@ -149,6 +152,11 @@ namespace SafriDesigner
             /// start up the gameplay systems like health, inventory and abilities
             /// initialize anything that depends on other gameobjects
             /// trigger the first gameplay related actions like spawning and starting coroutiines
+            
+            // healthSystem.Initialize(Health);
+            // staminaSystem.Initialize(Energy);
+            // StartCoroutine(EnemySpawnRoutine());
+            // _playerCamera.Lookat(transform);
         }
 
         // Update is called once per frame
@@ -162,62 +170,30 @@ namespace SafriDesigner
             isGrounded = _characterController.isGrounded; //isGrounded
 
             ApplyGravity(); //apply gravity to the player
-
-            //calculations of movement input
-            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized; 
-            Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized; 
-
-            Vector3 moveDirection = cameraRightXZ * _playerLocomotionInput.MovementInput.x + cameraForwardXZ * _playerLocomotionInput.MovementInput.y; //Vector3 moveDirection
-
-            //normalize the movement in order to keep the player from moving faster diagonally            
-            moveDirection = moveDirection.normalized;
-
-            //move the player
-            Vector3 move = moveDirection * walkingSpeed;
-            _velocity.y += Gravity * Time.deltaTime; //apply gravity to the player
-            move.y = _velocity.y; //move the player in the y direction
-            // Vector3 movementDelta = moveDirection * runSpeed * Time.deltaTime; //Vector3 movementDelta
-            // Vector3 newVelocity = _characterController.velocity + movementDelta; //Vector3 newVelocity
-
-            //only call this once per frame
-            _characterController.Move(move * Time.deltaTime); //Move the character controller
-
+            HandleMovement(); //handle player movement
+            RegenerateHealth(); //regenerate health
+            RegenerateStamina(); //regenerate stamina
             // if(playerHealth <= 0) GameOver();
 
-            // abilityCooldown -= Time.deltaTime;
+            // abilityCooldown -= Time.deltaTime; 
 
-            // if(isAlive && healthSystem.CurrentHealth > 0)
-            // {
-            //     healthSystem.RegenerateHealth();
-            // }
-            
         }
 
-        private void LateUpdate() //always do the camera logic AFTER movement logic, this should be primarily physics logic
-        // camera positioning or smoothing, post processing effects, animation syncing
-        {
-                //i want to set a look limit for the camera so that the player cannot look up or down past a certain point
-                //this is done by clamping the y rotation of the camera
-            _cameraRotation.x += cameraSensitivityH * _playerLocomotionInput.LookInput.x;
-            _cameraRotation.y = Mathf.Clamp(_cameraRotation.y - cameraSensitivityV * _playerLocomotionInput.LookInput.y, -lookLimitV, lookLimitV);
-
-            _playerTargetRotation.x += transform.eulerAngles.x + cameraSensitivityH * _playerLocomotionInput.LookInput.x;
-            transform.rotation = Quaternion.Euler(0f, _playerTargetRotation.x, 0f);
-
-            _playerCamera.transform.rotation = Quaternion.Euler(_cameraRotation.y, _cameraRotation.x, 0f);
-        }
 
         void FixedUpdate() //fixed update is called once per physics update
         {
             
-            
-            // if(!isRunning && isAlive) //if the player is not running and is alive
-            // {
-            //     staminaSystem.RegenerateStamina(); //regen stamina when you stop running
-            // }
         }
 
-        private4 IEnumerator EnemySpawnRoutine()
+        
+        private void LateUpdate() //always do the camera logic AFTER movement logic, this should be primarily physics logic
+        // camera positioning or smoothing, post processing effects, animation syncing
+        {
+            HandleLookAtMouse();
+        }
+
+
+        private IEnumerator EnemySpawnRoutine()
         {
             //spawn an enemy
             //wait for a few seconds
@@ -226,7 +202,27 @@ namespace SafriDesigner
             yield return null;
         }
 
-        #region Player Movement Methods (Idle, Jump, MoveForward, MoveBackward, MoveLeft, MoveRight, Sprint, Crouch, Interact)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #region Player Movement and Camera methods
         void Idle()
         {
             //should stop the player from moving
@@ -262,6 +258,36 @@ namespace SafriDesigner
             {
                 _velocity.y -= Gravity * Time.deltaTime; //apply gravity to the player
             }
+        }
+
+        private void RegenerateHealth()
+        {
+            if (isAlive && healthSystem.CurrentHealth > 0)
+            {
+                healthSystem.RegenerateHealth();
+            }
+        }
+
+        private void RegenerateStamina()
+        {
+            if (!isRunning && isAlive) //if the player is not running and is alive
+            {
+                staminaSystem.RegenerateStamina(); //regen stamina when you stop running
+            }
+        }
+
+
+        void HandleLookAtMouse()
+        {
+            //rotation based on mouse input
+
+        }
+
+        void HandleMovement()
+        {
+            //movement based on global _movementInput
+            Vector3 moveDirection = Vector3.right * _movementInput.x + Vector3.forward * _movementInput.z;
+            moveDirection = moveDirection.normalized;
         }
         #endregion
     }
