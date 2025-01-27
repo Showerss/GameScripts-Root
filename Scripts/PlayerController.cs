@@ -35,7 +35,7 @@ namespace SafriDesigner
         #region Player Construction declarations (rigidbody, character type, camera)
         private CharacterType _characterType; //type of character
         private PlayerLocomotionInput _playerLocomotionInput;
-        [SerializeField] private CharacterController _characterController;
+        
         
         private StaminaSystem staminaSystem;
         private HealthSystem healthSystem;
@@ -63,7 +63,9 @@ namespace SafriDesigner
 
 
 
-
+        [Space(25)] 
+        [Header("Player Controller")]
+        [SerializeField] private CharacterController _characterController;
 
 
         #region Player health/stam/speed values and floats (walking speed, running speed, health, stamina, etc)
@@ -82,7 +84,6 @@ namespace SafriDesigner
         [SerializeField] private float Health = 100.0f;
         [SerializeField] private float Energy = 100.0f;
 
-        
 
         
         #endregion
@@ -104,11 +105,6 @@ namespace SafriDesigner
         [SerializeField] private float cameraMaxVerticalAngle = 80.0f;
         // private Vector2 _cameraRotation = Vector2.zero;
         // private Vector2 _playerTargetRotation;
-
-
-
-
-        [SerializeField] private PlayerControls controls;
         
 
 
@@ -123,6 +119,7 @@ namespace SafriDesigner
             /// 3. assign camera
             /// 4. assign health system
             /// 5. assign stamina system
+            /// setup dependencies, initialize variables or states and assign getcomponent references
             /// </summary>
             
 
@@ -141,13 +138,25 @@ namespace SafriDesigner
 
         }
 
-        void Start() //start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start() //start is called once before the first execution of Update after the MonoBehaviour is created, use it for caching references, setting up variables, etc
         {
-            
+            /// typically within start you will always find a few things happening... 
+            /// 1. setting up the player's health system
+            /// 2. setting up the player's stamina system
+            /// 3. setting up the player's crosshair
+            /// 4. setting up the player's camera rotation
+            /// 5. setting up the player's camera position
+            /// start up the gameplay systems like health, inventory and abilities
+            /// initialize anything that depends on other gameobjects
+            /// trigger the first gameplay related actions like spawning and starting coroutiines
         }
 
         // Update is called once per frame
-        void Update() //update is called every frame
+        void Update() //update is called every frame, use it sparingly for game logic, 
+        /// WARNING: offload calculations to outside methods or coroutines
+        /// polling inputs and responding in real time, 
+        /// handling gameplay systems that need per-frame updates like timers and character AI 
+        /// animate or move objects that arent physics based
         {
 
             isGrounded = _characterController.isGrounded; //isGrounded
@@ -173,6 +182,9 @@ namespace SafriDesigner
             //only call this once per frame
             _characterController.Move(move * Time.deltaTime); //Move the character controller
 
+            // if(playerHealth <= 0) GameOver();
+
+            // abilityCooldown -= Time.deltaTime;
 
             // if(isAlive && healthSystem.CurrentHealth > 0)
             // {
@@ -181,31 +193,18 @@ namespace SafriDesigner
             
         }
 
-        private void LateUpdate() //always do the camera logic AFTER movement logic
+        private void LateUpdate() //always do the camera logic AFTER movement logic, this should be primarily physics logic
+        // camera positioning or smoothing, post processing effects, animation syncing
         {
                 //i want to set a look limit for the camera so that the player cannot look up or down past a certain point
                 //this is done by clamping the y rotation of the camera
-                // _cameraRotation.x += cameraSensitivityH * _playerLocomotionInput.LookInput.x;
-                // _cameraRotation.y = Mathf.Clamp(_cameraRotation.y, - cameraSensitivityV * _playerLocomotionInput.LookInput.y, cameraMaxVerticalAngle);
+            _cameraRotation.x += cameraSensitivityH * _playerLocomotionInput.LookInput.x;
+            _cameraRotation.y = Mathf.Clamp(_cameraRotation.y - cameraSensitivityV * _playerLocomotionInput.LookInput.y, -lookLimitV, lookLimitV);
 
-                // _playerTargetRotation.x += transform.eulerAngles.x + cameraSensitivityH * _playerLocomotionInput.LookInput.x;
-                // transform.rotation = Quaternion.Euler(0, _playerTargetRotation.x, 0);
+            _playerTargetRotation.x += transform.eulerAngles.x + cameraSensitivityH * _playerLocomotionInput.LookInput.x;
+            transform.rotation = Quaternion.Euler(0f, _playerTargetRotation.x, 0f);
 
-                // _playerCamera.transform.rotation = Quaternion.Euler(-_cameraRotation.y, _playerTargetRotation.x, 0);
-
-                // Step 1: Get the mouse position in the world
-            Ray mouseRay = _playerCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (Physics.Raycast(mouseRay, out RaycastHit hitInfo, Mathf.Infinity))
-            {
-                // Step 2: Calculate the direction from the player to the mouse hit point
-                Vector3 targetPoint = hitInfo.point;
-                Vector3 direction = (targetPoint - transform.position).normalized;
-                direction.y = 0; // Ignore vertical rotation to keep the player upright
-
-                // Step 3: Rotate the player to face the target direction
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-            }
+            _playerCamera.transform.rotation = Quaternion.Euler(_cameraRotation.y, _cameraRotation.x, 0f);
         }
 
         void FixedUpdate() //fixed update is called once per physics update
@@ -216,6 +215,15 @@ namespace SafriDesigner
             // {
             //     staminaSystem.RegenerateStamina(); //regen stamina when you stop running
             // }
+        }
+
+        private4 IEnumerator EnemySpawnRoutine()
+        {
+            //spawn an enemy
+            //wait for a few seconds
+            //spawn another enemy
+            //repeat
+            yield return null;
         }
 
         #region Player Movement Methods (Idle, Jump, MoveForward, MoveBackward, MoveLeft, MoveRight, Sprint, Crouch, Interact)
@@ -236,7 +244,6 @@ namespace SafriDesigner
         }
         void Crouch()
         {
-            
             
         }
         void Interact()
