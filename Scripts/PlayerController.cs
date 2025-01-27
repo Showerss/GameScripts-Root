@@ -6,6 +6,7 @@ using Unity.Multiplayer.Center.Common.Analytics;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.Rendering;
 using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEngine.EventSystems;
 
 namespace SafriDesigner
 {
@@ -35,12 +36,12 @@ namespace SafriDesigner
         private CharacterType _characterType; //type of character
         private PlayerLocomotionInput _playerLocomotionInput;
         [SerializeField] private CharacterController _characterController;
-        [SerializeField] private Camera _playerCamera;
+        
         private StaminaSystem staminaSystem;
         private HealthSystem healthSystem;
-        private Vector2 _cameraRotation = Vector2.zero;
-        private Vector2 _playerTargetRotation;
-        private Vector3 _velocity;
+        
+        
+        private Vector3 _velocity; //veclcity will be stored as a vector3 (x, y, z)
 
         #endregion
 
@@ -96,9 +97,15 @@ namespace SafriDesigner
         [Space(50)]
 
         [Header("Camera Controls")]
-        [SerializeField] private float cameraSensitivity = 2.0f;
+        [SerializeField] private Camera _playerCamera;
+        [SerializeField] private float cameraSensitivityH = 2.0f;
+        [SerializeField] private float cameraSensitivityV = 2.0f;
         [SerializeField] private float cameraSmoothing = 2.0f;
         [SerializeField] private float cameraMaxVerticalAngle = 80.0f;
+        // private Vector2 _cameraRotation = Vector2.zero;
+        // private Vector2 _playerTargetRotation;
+
+
 
 
         [SerializeField] private PlayerControls controls;
@@ -142,48 +149,73 @@ namespace SafriDesigner
         // Update is called once per frame
         void Update() //update is called every frame
         {
-            //Gravity 
-            if(isGrounded && _velocity.y < 0)
-            {
-                _velocity.y = -2f;
-            }
 
-            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized; //Vector3 cameraForwardXZ
-            Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized; //Vector3 cameraRightXZ
+            isGrounded = _characterController.isGrounded; //isGrounded
+
+            ApplyGravity(); //apply gravity to the player
+
+            //calculations of movement input
+            Vector3 cameraForwardXZ = new Vector3(_playerCamera.transform.forward.x, 0f, _playerCamera.transform.forward.z).normalized; 
+            Vector3 cameraRightXZ = new Vector3(_playerCamera.transform.right.x, 0f, _playerCamera.transform.right.z).normalized; 
 
             Vector3 moveDirection = cameraRightXZ * _playerLocomotionInput.MovementInput.x + cameraForwardXZ * _playerLocomotionInput.MovementInput.y; //Vector3 moveDirection
 
-            Vector3 movementDelta = moveDirection * runSpeed * Time.deltaTime; //Vector3 movementDelta
-            Vector3 newVelocity = _characterController.velocity + movementDelta; //Vector3 newVelocity
+            //normalize the movement in order to keep the player from moving faster diagonally            
+            moveDirection = moveDirection.normalized;
 
-
-            //keep the players max speed at runSpeed
-            newVelocity = Vector3.ClampMagnitude(newVelocity, runSpeed); //Vector3 newVelocity
+            //move the player
+            Vector3 move = moveDirection * walkingSpeed;
+            _velocity.y += Gravity * Time.deltaTime; //apply gravity to the player
+            move.y = _velocity.y; //move the player in the y direction
+            // Vector3 movementDelta = moveDirection * runSpeed * Time.deltaTime; //Vector3 movementDelta
+            // Vector3 newVelocity = _characterController.velocity + movementDelta; //Vector3 newVelocity
 
             //only call this once per frame
-            _characterController.Move(newVelocity * Time.deltaTime); //Move the character controller
+            _characterController.Move(move * Time.deltaTime); //Move the character controller
 
 
-            if(isAlive && healthSystem.CurrentHealth > 0)
-            {
-                healthSystem.RegenerateHealth();
-            }
+            // if(isAlive && healthSystem.CurrentHealth > 0)
+            // {
+            //     healthSystem.RegenerateHealth();
+            // }
             
         }
 
-        private void LateUpdate()
+        private void LateUpdate() //always do the camera logic AFTER movement logic
         {
-                
+                //i want to set a look limit for the camera so that the player cannot look up or down past a certain point
+                //this is done by clamping the y rotation of the camera
+                // _cameraRotation.x += cameraSensitivityH * _playerLocomotionInput.LookInput.x;
+                // _cameraRotation.y = Mathf.Clamp(_cameraRotation.y, - cameraSensitivityV * _playerLocomotionInput.LookInput.y, cameraMaxVerticalAngle);
+
+                // _playerTargetRotation.x += transform.eulerAngles.x + cameraSensitivityH * _playerLocomotionInput.LookInput.x;
+                // transform.rotation = Quaternion.Euler(0, _playerTargetRotation.x, 0);
+
+                // _playerCamera.transform.rotation = Quaternion.Euler(-_cameraRotation.y, _playerTargetRotation.x, 0);
+
+                // Step 1: Get the mouse position in the world
+            Ray mouseRay = _playerCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (Physics.Raycast(mouseRay, out RaycastHit hitInfo, Mathf.Infinity))
+            {
+                // Step 2: Calculate the direction from the player to the mouse hit point
+                Vector3 targetPoint = hitInfo.point;
+                Vector3 direction = (targetPoint - transform.position).normalized;
+                direction.y = 0; // Ignore vertical rotation to keep the player upright
+
+                // Step 3: Rotate the player to face the target direction
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
+            }
         }
 
         void FixedUpdate() //fixed update is called once per physics update
         {
             
             
-            if(!isRunning && isAlive) //if the player is not running and is alive
-            {
-                staminaSystem.RegenerateStamina(); //regen stamina when you stop running
-            }
+            // if(!isRunning && isAlive) //if the player is not running and is alive
+            // {
+            //     staminaSystem.RegenerateStamina(); //regen stamina when you stop running
+            // }
         }
 
         #region Player Movement Methods (Idle, Jump, MoveForward, MoveBackward, MoveLeft, MoveRight, Sprint, Crouch, Interact)
@@ -210,6 +242,19 @@ namespace SafriDesigner
         void Interact()
         {
             //should interact with the object in front of the player
+        }
+
+        void ApplyGravity()
+        {
+            //reset vertical velocity if the player is grounded
+            if(isGrounded && _velocity.y < 0)
+            {
+                _velocity.y = -2f; //this is a small downward force to the y velocity to keep the player grounded (couldnt i just do = gravity? the gravity that i serialized?)
+            }
+            else
+            {
+                _velocity.y -= Gravity * Time.deltaTime; //apply gravity to the player
+            }
         }
         #endregion
     }

@@ -23,7 +23,6 @@ namespace SafriDesigner
         {
             PlayerControls.Disable();
             PlayerControls.PlayerLocomotionMap.Disable();
-            PlayerControls.Dispose();
         }
         public void OnMovement(InputAction.CallbackContext context)
         {
