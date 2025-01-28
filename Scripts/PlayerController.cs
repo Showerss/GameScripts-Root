@@ -171,8 +171,8 @@ namespace SafriDesigner
 
             ApplyGravity(); //apply gravity to the player
             HandleMovement(); //handle player movement
-            RegenerateHealth(); //regenerate health
-            RegenerateStamina(); //regenerate stamina
+            // RegenerateHealth(); //regenerate health
+            // RegenerateStamina(); //regenerate stamina
             // if(playerHealth <= 0) GameOver();
 
             // abilityCooldown -= Time.deltaTime; 
@@ -260,21 +260,21 @@ namespace SafriDesigner
             }
         }
 
-        private void RegenerateHealth()
-        {
-            if (isAlive && healthSystem.CurrentHealth > 0)
-            {
-                healthSystem.RegenerateHealth();
-            }
-        }
+        // private void RegenerateHealth()
+        // {
+        //     if (isAlive && healthSystem.CurrentHealth > 0)
+        //     {
+        //         healthSystem.RegenerateHealth();
+        //     }
+        // }
 
-        private void RegenerateStamina()
-        {
-            if (!isRunning && isAlive) //if the player is not running and is alive
-            {
-                staminaSystem.RegenerateStamina(); //regen stamina when you stop running
-            }
-        }
+        // private void RegenerateStamina()
+        // {
+        //     if (!isRunning && isAlive) //if the player is not running and is alive
+        //     {
+        //         staminaSystem.RegenerateStamina(); //regen stamina when you stop running
+        //     }
+        // }
 
 
         void HandleLookAtMouse()

@@ -38,7 +38,6 @@ namespace SafriDesigner
         public void OnLook(InputAction.CallbackContext context)
         {
             LookInput = context.ReadValue<Vector2>();
-            Debug.Log($"Looking: {LookInput}");
         }
     }
 }
