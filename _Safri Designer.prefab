@@ -6666,7 +6666,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128fd3e47f559e54ea7f55b9d3e061c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _characterController: {fileID: 8721996192786639399}
   isGrounded: 0
   isRunning: 0
   isCrouching: 0
@@ -6679,6 +6678,7 @@ MonoBehaviour:
   isAlive: 1
   isInvestigating: 0
   isBusy: 0
+  _characterController: {fileID: 8721996192786639399}
   walkingSpeed: 10
   runSpeed: 20
   crouchingSpeed: 5

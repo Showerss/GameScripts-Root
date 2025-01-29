@@ -34,7 +34,7 @@ namespace SafriDesigner
 
         #region Player Construction declarations (rigidbody, character type, camera)
         private CharacterType _characterType; //type of character
-        private PlayerLocomotionInput _playerLocomotionInput;
+        
         private Plane groundPlane;
         #endregion
 
@@ -72,6 +72,7 @@ namespace SafriDesigner
         [SerializeField] private float Gravity = 9.8f;
         private Vector3 _movementInput;
         private Vector3 _velocity; 
+        private PlayerLocomotionInput _playerLocomotionInput;
         
 
         [Space(25)]
@@ -134,6 +135,10 @@ namespace SafriDesigner
             {
                 _playerCamera = Camera.main;
             }   
+            if(_characterController == null)
+            {
+                Debug.LogError("Character Controller is not assigned to the player controller");
+            }
 
             //make the groundPlane which will be for the player to walk on and for faceing mouse direction
             groundPlane = new Plane(Vector3.up, Vector3.zero);
@@ -166,13 +171,19 @@ namespace SafriDesigner
         /// handling gameplay systems that need per-frame updates like timers and character AI 
         /// animate or move objects that arent physics based
         {
+            // Update input movement
+            _movementInput = new Vector3(_playerLocomotionInput.MovementInput.x, 0, _playerLocomotionInput.MovementInput.y);
 
-            isGrounded = _characterController.isGrounded; //isGrounded
+            // Check if the character is grounded
+            isGrounded = _characterController.isGrounded;
 
-            ApplyGravity(); //apply gravity to the player
-            HandleMovement(); //handle player movement
-            RegenerateHealth(); //regenerate health
-            RegenerateStamina(); //regenerate stamina
+            // Apply gravity
+            ApplyGravity();
+
+            // Handle movement
+            HandleMovement();
+            // RegenerateHealth(); //regenerate health
+            // RegenerateStamina(); //regenerate stamina
             // if(playerHealth <= 0) GameOver();
 
             // abilityCooldown -= Time.deltaTime; 
@@ -260,21 +271,21 @@ namespace SafriDesigner
             }
         }
 
-        private void RegenerateHealth()
-        {
-            if (isAlive && healthSystem.CurrentHealth > 0)
-            {
-                healthSystem.RegenerateHealth();
-            }
-        }
+        // private void RegenerateHealth()
+        // {
+        //     if (isAlive && healthSystem.CurrentHealth > 0)
+        //     {
+        //         healthSystem.RegenerateHealth();
+        //     }
+        // }
 
-        private void RegenerateStamina()
-        {
-            if (!isRunning && isAlive) //if the player is not running and is alive
-            {
-                staminaSystem.RegenerateStamina(); //regen stamina when you stop running
-            }
-        }
+        // private void RegenerateStamina()
+        // {
+        //     if (!isRunning && isAlive) //if the player is not running and is alive
+        //     {
+        //         staminaSystem.RegenerateStamina(); //regen stamina when you stop running
+        //     }
+        // }
 
 
         void HandleLookAtMouse()
@@ -285,9 +296,20 @@ namespace SafriDesigner
 
         void HandleMovement()
         {
-            //movement based on global _movementInput
-            Vector3 moveDirection = Vector3.right * _movementInput.x + Vector3.forward * _movementInput.z;
-            moveDirection = moveDirection.normalized;
+            // Convert input into movement direction
+            Vector3 moveDirection = new Vector3(_movementInput.x, 0, _movementInput.z);
+            
+            // Normalize movement and apply speed (prevents diagonal movement speed issues)
+            if (moveDirection.magnitude > 0.1f)
+            {
+                moveDirection = moveDirection.normalized * walkingSpeed;
+            }
+
+            // Apply gravity
+            moveDirection.y = _velocity.y;
+
+            // Move the player
+            _characterController.Move(moveDirection * Time.deltaTime);
         }
         #endregion
     }
