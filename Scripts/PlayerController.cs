@@ -2,11 +2,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Collections;
-using Unity.Multiplayer.Center.Common.Analytics;
-using UnityEditor.Experimental.GraphView;
-using UnityEngine.Rendering;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEngine.EventSystems;
+using Unity.VisualScripting;
+
 
 namespace SafriDesigner
 {
@@ -14,30 +11,12 @@ namespace SafriDesigner
     public class PlayerController : MonoBehaviour
     {
 
-        
-
-        public enum CharacterType
-        {
-            NPC,
-            Enemy,
-            Player
-        }
-
-        public enum CharacterAge
-        {
-            Child,
-            Teen,
-            Adult,
-            Elder
-        }
-
-
-        #region Player Construction declarations (rigidbody, character type, camera)
-        private CharacterType _characterType; //type of character
-        
-        private Plane groundPlane;
-        #endregion
-
+        //components 
+        private PlayerControls _playerControls;
+        private CharacterController _characterController;
+        private Vector2 inputMove;
+        private Vector2 inputLook;
+        private float yRotation = 0f;
 
 
         #region Player Status bools (blocking, dead, alive, running, etc)
@@ -59,7 +38,6 @@ namespace SafriDesigner
 
         [Space(25)] 
         [Header("Player Controller")]
-        [SerializeField] private CharacterController _characterController;
 
 
         #region Player health/stam/speed values and floats (walking speed, running speed, health, stamina, etc)
@@ -124,26 +102,16 @@ namespace SafriDesigner
             /// </summary>
             
 
-            //assign locomotion input
-            _playerLocomotionInput = GetComponent<PlayerLocomotionInput>();
-
-            //assign character controller
+            _playerControls = new PlayerControls();
             _characterController = GetComponent<CharacterController>();
 
-            //if the camera is not assigned, get the main camera
-            if (_playerCamera == null) 
-            {
-                _playerCamera = Camera.main;
-            }   
-            if(_characterController == null)
-            {
-                Debug.LogError("Character Controller is not assigned to the player controller");
-            }
-
-            //make the groundPlane which will be for the player to walk on and for faceing mouse direction
-            groundPlane = new Plane(Vector3.up, Vector3.zero);
 
 
+        }
+
+        void OnEnable()
+        {
+            
         }
 
         void Start() //start is called once before the first execution of Update after the MonoBehaviour is created, use it for caching references, setting up variables, etc
@@ -171,17 +139,17 @@ namespace SafriDesigner
         /// handling gameplay systems that need per-frame updates like timers and character AI 
         /// animate or move objects that arent physics based
         {
-            // Update input movement
-            _movementInput = new Vector3(_playerLocomotionInput.MovementInput.x, 0, _playerLocomotionInput.MovementInput.y);
 
-            // Check if the character is grounded
-            isGrounded = _characterController.isGrounded;
+            //check if the player is grounded
+            GroundCheck(); 
 
             // Apply gravity
             ApplyGravity();
 
             // Handle movement
-            HandleMovement();
+            MovePlayer();
+
+
             // RegenerateHealth(); //regenerate health
             // RegenerateStamina(); //regenerate stamina
             // if(playerHealth <= 0) GameOver();
@@ -234,28 +202,23 @@ namespace SafriDesigner
 
 
         #region Player Movement and Camera methods
-        void Idle()
+
+        void OnJump(InputValue value)
         {
-            //should stop the player from moving
-            //regains stamina
-            // transform.localScale = new Vector3(1, 1, 1);
-        }
-        void Jump()
-        {
-            
+            if(value.isPressed && isGrounded)
+            {
+                _velocity.y = Mathf.Sqrt(jumpForce * -2f * Gravity);
+            }
         }
 
-        void Sprint()
+        void OnMove(InputValue value)
         {
-            
+            inputMove = value.Get<Vector2>();
         }
-        void Crouch()
+
+        void OnLook(InputValue value)
         {
-            
-        }
-        void Interact()
-        {
-            //should interact with the object in front of the player
+            inputLook = value.Get<Vector2>();
         }
 
         void ApplyGravity()
@@ -269,6 +232,26 @@ namespace SafriDesigner
             {
                 _velocity.y -= Gravity * Time.deltaTime; //apply gravity to the player
             }
+        }
+
+        void GroundCheck()
+        {
+            isGrounded = _characterController.isGrounded;
+            if(isGrounded && _velocity.y < 0)
+            {
+                _velocity.y = -2f;
+            }
+        }
+
+        void MovePlayer()
+        {
+            Vector3 moveDirection = new Vector3(inputMove.x, 0, inputMove.y);
+            moveDirection = transform.TransformDirection(moveDirection);
+
+            _characterController.Move(moveDirection * walkingSpeed * Time.deltaTime);
+
+            _velocity.y += Gravity * Time.deltaTime;
+            _characterController.Move(_velocity * Time.deltaTime);
         }
 
         // private void RegenerateHealth()
@@ -290,27 +273,27 @@ namespace SafriDesigner
 
         void HandleLookAtMouse()
         {
-            //rotation based on mouse input
+            transform.Rotate(Vector3.up * inputLook.x * cameraSensitivityH);
 
         }
 
-        void HandleMovement()
-        {
-            // Convert input into movement direction
-            Vector3 moveDirection = new Vector3(_movementInput.x, 0, _movementInput.z);
+        // void HandleMovement()
+        // {
+        //     // Convert input into movement direction
+        //     Vector3 moveDirection = new Vector3(_movementInput.x, 0, _movementInput.z);
             
-            // Normalize movement and apply speed (prevents diagonal movement speed issues)
-            if (moveDirection.magnitude > 0.1f)
-            {
-                moveDirection = moveDirection.normalized * walkingSpeed;
-            }
+        //     // Normalize movement and apply speed (prevents diagonal movement speed issues)
+        //     if (moveDirection.magnitude > 0.1f)
+        //     {
+        //         moveDirection = moveDirection.normalized * walkingSpeed;
+        //     }
 
-            // Apply gravity
-            moveDirection.y = _velocity.y;
+        //     // Apply gravity
+        //     moveDirection.y = _velocity.y;
 
-            // Move the player
-            _characterController.Move(moveDirection * Time.deltaTime);
-        }
+        //     // Move the player
+        //     _characterController.Move(moveDirection * Time.deltaTime);
+        // }
         #endregion
     }
 }
