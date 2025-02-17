@@ -34,6 +34,10 @@ namespace SafriDesigner
         public bool isAlive = true; //is the player alive
         public bool isInvestigating = false; //is the player investigating
         public bool isBusy = false; //is the player busy
+
+        //permanent movement settings
+        public bool enableJump = true; //is the player able to jump 
+        public bool holdToCrouch = false; //is the player holding to crouch
         #endregion
 
 
@@ -105,6 +109,8 @@ namespace SafriDesigner
             
             rb = GetComponent<Rigidbody>();
 
+            //set some internal variables like FOV, joint original position and scale, etc
+
             _playerControls = new PlayerControls();
             _characterController = GetComponent<CharacterController>();
 
@@ -142,6 +148,26 @@ namespace SafriDesigner
         /// handling gameplay systems that need per-frame updates like timers and character AI 
         /// animate or move objects that arent physics based
         {
+
+            #region Camera
+            #endregion
+
+            #region Camera Zoom
+            #endregion
+
+            #region Sprint
+            #endregion
+
+            #region Jump
+            // Gets input and calls jump method
+            if(enableJump && isGrounded)
+            {
+                Jump();
+            }
+            #endregion
+
+            #region Crouch
+            #endregion
 
             //check if the player is grounded
             GroundCheck(); 
@@ -208,9 +234,17 @@ namespace SafriDesigner
 
         void OnJump(InputValue value)
         {
-            if(value.isPressed && isGrounded)
+            // Adds force to the player rigidbody to jump
+            if (isGrounded)
             {
-                _velocity.y = Mathf.Sqrt(jumpForce * -2f * Gravity);
+                rb.AddForce(0f, jumpForce, 0f, ForceMode.Impulse);
+                isGrounded = false;
+            }
+
+            // When crouched and using toggle system, will uncrouch for a jump
+            if(isCrouching && !holdToCrouch)
+            {
+                Crouch();
             }
         }
 
