@@ -70,7 +70,7 @@ namespace SafriDesigner
                 {
                     ""name"": """",
                     ""id"": ""1f476f07-2879-423a-91b8-efb29e59509e"",
-                    ""path"": ""<Mouse>/delta"",
+                    ""path"": ""<Pointer>/delta"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",

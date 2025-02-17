@@ -11,6 +11,8 @@ namespace SafriDesigner
     public class PlayerController : MonoBehaviour
     {
 
+        private Rigidbody rb;
+
         //components 
         private PlayerControls _playerControls;
         private CharacterController _characterController;
@@ -101,6 +103,7 @@ namespace SafriDesigner
             /// setup dependencies, initialize variables or states and assign getcomponent references
             /// </summary>
             
+            rb = GetComponent<Rigidbody>();
 
             _playerControls = new PlayerControls();
             _characterController = GetComponent<CharacterController>();
@@ -219,6 +222,7 @@ namespace SafriDesigner
         void OnLook(InputValue value)
         {
             inputLook = value.Get<Vector2>();
+            Debug.Log("OnLook: " + inputLook);
         }
 
         void ApplyGravity()
@@ -273,27 +277,13 @@ namespace SafriDesigner
 
         void HandleLookAtMouse()
         {
-            transform.Rotate(Vector3.up * inputLook.x * cameraSensitivityH);
+            float rotationAmount = inputLook.x * cameraSensitivityH;
+
+            //rotate on the y Axis
+            transform.Rotate(Vector3.up, rotationAmount);
 
         }
 
-        // void HandleMovement()
-        // {
-        //     // Convert input into movement direction
-        //     Vector3 moveDirection = new Vector3(_movementInput.x, 0, _movementInput.z);
-            
-        //     // Normalize movement and apply speed (prevents diagonal movement speed issues)
-        //     if (moveDirection.magnitude > 0.1f)
-        //     {
-        //         moveDirection = moveDirection.normalized * walkingSpeed;
-        //     }
-
-        //     // Apply gravity
-        //     moveDirection.y = _velocity.y;
-
-        //     // Move the player
-        //     _characterController.Move(moveDirection * Time.deltaTime);
-        // }
         #endregion
     }
 }
